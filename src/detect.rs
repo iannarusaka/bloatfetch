@@ -13,7 +13,15 @@ pub fn os_info() -> Option<String> {
     let key = RegKey::predef(HKEY_LOCAL_MACHINE)
         .open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
         .ok()?;
-    let product: String = key.get_value("ProductName").ok()?;
+    let mut product: String = key.get_value("ProductName").ok()?;
+    let build: u32 = key
+        .get_value::<String, _>("CurrentBuildNumber")
+        .ok()
+        .and_then(|b| b.parse().ok())
+        .unwrap_or(0);
+    if build >= 22000 {
+        product = product.replace("Windows 10", "Windows 11");
+    }
     let display: String = key.get_value("DisplayVersion").unwrap_or_default();
     if display.is_empty() {
         Some(product)
