@@ -151,23 +151,23 @@ pub fn render(scan: &Scan) {
         ));
     }
 
-    if scan.total_packages > 0 {
-        let bloat = found.len();
-        let pct = bloat as f64 / scan.total_packages as f64 * 100.0;
-        right.push(format!(
-            "{} {} installed, {bloat} bloat ({:.1}%)",
-            key("Packages", CYAN),
-            scan.total_packages,
-            pct
-        ));
-    }
-
     right.push(String::new());
 
     if found.is_empty() {
         right.push(format!("{DIM}(none found — did you build this PC yourself?){RESET}"));
     } else {
-        right.push(format!("{} {} packages", key("Bloat", YELLOW), found.len()));
+        let pct = if scan.total_packages > 0 {
+            found.len() as f64 / scan.total_packages as f64 * 100.0
+        } else {
+            0.0
+        };
+        right.push(format!(
+            "{} {} packages installed, {} bloat ({:.1}%)",
+            key("Bloat rate", YELLOW),
+            scan.total_packages,
+            found.len(),
+            pct
+        ));
 
         for cat in Category::all() {
             let items: Vec<&Found> = found.iter().filter(|f| &f.entry.category == cat).collect();
