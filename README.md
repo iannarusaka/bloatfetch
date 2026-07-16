@@ -10,8 +10,22 @@ just mocks you
 
 ## install
 
+with scoop:
+
+```powershell
+scoop bucket add iannarusaka https://github.com/iannarusaka/scoop-bucket
+scoop install bloatfetch
+```
+
+or with cargo:
+
 ```sh
-cargo install --path .
+cargo install --git https://github.com/iannarusaka/bloatfetch
+```
+
+then run:
+
+```sh
 bloatfetch
 ```
 
