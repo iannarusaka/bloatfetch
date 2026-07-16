@@ -78,8 +78,8 @@ fn human_size(bytes: u64) -> String {
 }
 
 fn score_and_verdict(found: &[Found]) -> (u32, &'static str, &'static str) {
-    let gb_wasted: f64 = found.iter().filter_map(|f| f.size_bytes).sum::<u64>() as f64
-        / (1024.0 * 1024.0 * 1024.0);
+    let gb_wasted: f64 =
+        found.iter().filter_map(|f| f.size_bytes).sum::<u64>() as f64 / (1024.0 * 1024.0 * 1024.0);
     let raw = found.len() as f64 * 5.0 + gb_wasted * 3.0;
     let score = raw.round().min(100.0).max(0.0) as u32;
     let (verdict, color) = match score {
@@ -98,7 +98,11 @@ pub fn render(scan: &Scan) {
     let total_bytes: u64 = found.iter().filter_map(|f| f.size_bytes).sum();
 
     let art_lines = art();
-    let art_width = art_lines.iter().map(|l| visible_width(l)).max().unwrap_or(0);
+    let art_width = art_lines
+        .iter()
+        .map(|l| visible_width(l))
+        .max()
+        .unwrap_or(0);
     let pad = " ".repeat(art_width);
 
     let user = env::var("USERNAME").unwrap_or_else(|_| "victim".to_string());
@@ -107,9 +111,12 @@ pub fn render(scan: &Scan) {
     // build the right-hand column, line by line
     let mut right: Vec<String> = Vec::new();
     right.push(format!("{BOLD}{CYAN}{user}@{host}{RESET}"));
-    right.push(format!("{DIM}{}{RESET}", "-".repeat(user.len() + host.len() + 1)));
+    right.push(format!(
+        "{DIM}{}{RESET}",
+        "-".repeat(user.len() + host.len() + 1)
+    ));
 
-    const MAGENTA: &str = "[95m";
+    const MAGENTA: &str = "\x1b[95m";
     let key = |label: &str, c: &str| format!("{BOLD}{c}{label}:{RESET}");
 
     if let Some(os) = crate::detect::os_info() {
@@ -172,7 +179,9 @@ pub fn render(scan: &Scan) {
     right.push(String::new());
 
     if found.is_empty() {
-        right.push(format!("{DIM}(none found — did you build this PC yourself?){RESET}"));
+        right.push(format!(
+            "{DIM}(none found — did you build this PC yourself?){RESET}"
+        ));
     } else {
         let pct = if scan.total_packages > 0 {
             found.len() as f64 / scan.total_packages as f64 * 100.0
@@ -205,12 +214,21 @@ pub fn render(scan: &Scan) {
 
         let autostart = crate::detect::autostart_count();
         if autostart > 0 {
-            right.push(format!("{} {autostart} programs racing at boot", key("Autostart Junk", GREEN)));
+            right.push(format!(
+                "{} {autostart} programs delaying your boot",
+                key("Autostart Junk", GREEN)
+            ));
         }
 
-        let copilots = found.iter().filter(|f| f.name.to_lowercase().contains("copilot")).count();
+        let copilots = found
+            .iter()
+            .filter(|f| f.name.to_lowercase().contains("copilot"))
+            .count();
         if copilots > 0 {
-            right.push(format!("{} {copilots} (recommended: 0)", key("Copilots", GREEN)));
+            right.push(format!(
+                "{} {copilots} (recommended: 0)",
+                key("Copilots", GREEN)
+            ));
         }
 
         let never = 90 + (found.len() % 10);
@@ -221,14 +239,21 @@ pub fn render(scan: &Scan) {
 
         right.push(String::new());
 
-        let worst = found.iter().max_by_key(|f| f.size_bytes.unwrap_or(0)).unwrap();
+        let worst = found
+            .iter()
+            .max_by_key(|f| f.size_bytes.unwrap_or(0))
+            .unwrap();
         right.push(format!(
             "{} {} ({})",
             key("Worst Offender", BR_RED),
             worst.name,
             human_size(worst.size_bytes.unwrap_or(0))
         ));
-        right.push(format!("{} {DIM}{}{RESET}", key("Diagnosis", BR_RED), worst.entry.snark));
+        right.push(format!(
+            "{} {DIM}{}{RESET}",
+            key("Diagnosis", BR_RED),
+            worst.entry.snark
+        ));
     }
 
     let (score, verdict, score_color) = score_and_verdict(found);
@@ -236,18 +261,23 @@ pub fn render(scan: &Scan) {
     right.push(String::new());
 
     right.push(format!(
-        "{} {score_color}{score}/100  {verdict}{RESET}",
+        "{} {score_color}{score}/100 {verdict}{RESET}",
         key("Bloat Score", MAGENTA)
     ));
 
+    println!();
     let total_lines = art_lines.len().max(right.len());
     for i in 0..total_lines {
         let art_line = art_lines.get(i).map(|s| s.as_str()).unwrap_or(pad.as_str());
-        let art_visible = art_lines.get(i).map(|s| visible_width(s)).unwrap_or(art_width);
+        let art_visible = art_lines
+            .get(i)
+            .map(|s| visible_width(s))
+            .unwrap_or(art_width);
         let fill = " ".repeat(art_width.saturating_sub(art_visible) + 2);
         let right_line = right.get(i).map(|s| s.as_str()).unwrap_or("");
         println!("{art_line}{fill}{right_line}");
     }
+    println!();
 }
 
 #[cfg(test)]
