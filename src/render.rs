@@ -136,18 +136,20 @@ pub fn render(scan: &Scan) {
         ));
     }
 
-    if let Some((used, total)) = crate::detect::disk_c() {
-        let bloat_pct = if total > 0 {
-            total_bytes as f64 / total as f64 * 100.0
-        } else {
-            0.0
-        };
+    if total_bytes > 0 {
+        let pct = crate::detect::disk_c()
+            .filter(|(_, total)| *total > 0)
+            .map(|(_, total)| {
+                format!(
+                    " ({:.1}% of your disk)",
+                    total_bytes as f64 / total as f64 * 100.0
+                )
+            })
+            .unwrap_or_default();
         right.push(format!(
-            "{} {} / {} used ({:.1}% pure bloat)",
-            key("Disk", CYAN),
-            human_size(used),
-            human_size(total),
-            bloat_pct
+            "{} {}{pct}",
+            key("Disk wasted", CYAN),
+            human_size(total_bytes)
         ));
     }
 
@@ -217,9 +219,6 @@ pub fn render(scan: &Scan) {
 
     right.push(String::new());
 
-    if total_bytes > 0 {
-        right.push(format!("{} {}", key("Disk wasted", MAGENTA), human_size(total_bytes)));
-    }
     right.push(format!(
         "{} {score_color}{score}/100  {verdict}{RESET}",
         key("Bloat Score", MAGENTA)
