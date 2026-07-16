@@ -135,7 +135,15 @@ fn scan_registry(out: &mut Vec<Found>) -> usize {
             let size_bytes = key
                 .get_value::<u32, _>("EstimatedSize")
                 .ok()
-                .map(|kb| kb as u64 * 1024);
+                .map(|kb| kb as u64 * 1024)
+                .or_else(|| {
+                    let loc: String = key.get_value("InstallLocation").ok()?;
+                    let loc = loc.trim();
+                    if loc.is_empty() {
+                        return None;
+                    }
+                    dir_size(std::path::Path::new(loc), 6)
+                });
             out.push(Found { name, entry, size_bytes });
         }
     }
