@@ -122,8 +122,24 @@ pub fn render(scan: &Scan) {
     if let Some(ms) = crate::detect::uptime_ms() {
         let total_min = ms / 60_000;
         let (d, h, m) = (total_min / 1440, (total_min % 1440) / 60, total_min % 60);
-        let tail = if d >= 7 { " (afraid of updates?)" } else { " (mostly Windows Update)" };
-        right.push(format!("{} {d}d {h}h {m}m{tail}", key("Uptime", CYAN)));
+        let mut parts: Vec<String> = Vec::new();
+        for (n, word) in [(d, "day"), (h, "hour"), (m, "minute")] {
+            if n > 0 {
+                parts.push(format!("{n} {word}{}", if n == 1 { "" } else { "s" }));
+            }
+        }
+        let uptime = match parts.len() {
+            0 => "0 minutes".to_string(),
+            1 => parts.remove(0),
+            _ => {
+                let last = parts.pop().unwrap();
+                format!("{} and {last}", parts.join(", "))
+            }
+        };
+        right.push(format!(
+            "{} {uptime} running Windows Update",
+            key("Uptime", CYAN)
+        ));
     }
 
     if let Some((used, total)) = crate::detect::memory() {
