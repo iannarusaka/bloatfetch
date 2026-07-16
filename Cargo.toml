@@ -1,0 +1,13 @@
+[package]
+name = "bloatfetch"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winreg = "0.52"
+windows-sys = { version = "0.59", features = ["Win32_System_Console", "Win32_Foundation"] }
+
+[profile.release]
+opt-level = "s"
+strip = true
+lto = true
