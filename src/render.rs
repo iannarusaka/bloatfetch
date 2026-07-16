@@ -103,31 +103,53 @@ pub fn render(found: &[Found]) {
     right.push(format!("{BOLD}{CYAN}{user}@{host}{RESET}"));
     right.push(format!("{DIM}{}{RESET}", "-".repeat(user.len() + host.len() + 1)));
 
+    let key = |label: &str| format!("{BOLD}{YELLOW}{label}:{RESET}");
+
+    if let Some(os) = crate::detect::os_info() {
+        right.push(format!("{} {os}", key("OS")));
+    }
+    if let Some(h) = crate::detect::host_info() {
+        right.push(format!("{} {h}", key("Host")));
+    }
+
     if found.is_empty() {
         right.push(format!("{DIM}(none found — did you build this PC yourself?){RESET}"));
     } else {
+        right.push(format!("{} {} packages", key("Bloat"), found.len()));
+
         for cat in Category::all() {
             let items: Vec<&Found> = found.iter().filter(|f| &f.entry.category == cat).collect();
             if items.is_empty() {
                 continue;
             }
-            right.push(format!("{BOLD}{YELLOW}{}{RESET}", cat.label()));
-            for f in items {
-                right.push(format!("  {} {DIM}— {}{RESET}", f.name, f.entry.snark));
-            }
+            let sum: u64 = items.iter().filter_map(|f| f.size_bytes).sum();
+            right.push(format!(
+                "{} {} ({})",
+                key(cat.label()),
+                items.len(),
+                human_size(sum)
+            ));
         }
+
+        let worst = found.iter().max_by_key(|f| f.size_bytes.unwrap_or(0)).unwrap();
+        right.push(format!(
+            "{} {} ({})",
+            key("Worst Offender"),
+            worst.name,
+            human_size(worst.size_bytes.unwrap_or(0))
+        ));
+        right.push(format!("{} {DIM}{}{RESET}", key("Roast"), worst.entry.snark));
     }
 
     let (score, verdict, score_color) = score_and_verdict(found);
     let total_bytes: u64 = found.iter().filter_map(|f| f.size_bytes).sum();
 
-    right.push(String::new());
+    if total_bytes > 0 {
+        right.push(format!("{} {}", key("Disk wasted"), human_size(total_bytes)));
+    }
     right.push(format!(
-        "{BOLD}Bloat Score:{RESET} {score_color}{score}/100  {verdict}{RESET}"
-    ));
-    right.push(format!(
-        "{BOLD}Disk wasted:{RESET} {}",
-        human_size(total_bytes)
+        "{} {score_color}{score}/100  {verdict}{RESET}",
+        key("Bloat Score")
     ));
     right.push(format!(
         "{DIM}bloatfetch removes nothing. it just judges you.{RESET}"

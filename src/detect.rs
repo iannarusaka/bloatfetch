@@ -6,6 +6,40 @@ pub struct Found {
     pub size_bytes: Option<u64>,
 }
 
+pub fn os_info() -> Option<String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let key = RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+        .ok()?;
+    let product: String = key.get_value("ProductName").ok()?;
+    let display: String = key.get_value("DisplayVersion").unwrap_or_default();
+    if display.is_empty() {
+        Some(product)
+    } else {
+        Some(format!("{product} {display}"))
+    }
+}
+
+pub fn host_info() -> Option<String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let key = RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey(r"HARDWARE\DESCRIPTION\System\BIOS")
+        .ok()?;
+    let manufacturer: String = key.get_value("SystemManufacturer").unwrap_or_default();
+    let product: String = key.get_value("SystemProductName").unwrap_or_default();
+    let combined = format!("{} {}", manufacturer.trim(), product.trim());
+    let combined = combined.trim();
+    if combined.is_empty() {
+        None
+    } else {
+        Some(combined.to_string())
+    }
+}
+
 pub fn scan() -> Vec<Found> {
     let mut found = Vec::new();
     scan_registry(&mut found);
