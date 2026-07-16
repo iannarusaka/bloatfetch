@@ -40,16 +40,69 @@ pub fn host_info() -> Option<String> {
     }
 }
 
-pub fn scan() -> Vec<Found> {
-    let mut found = Vec::new();
-    scan_registry(&mut found);
-    scan_appx(&mut found);
-    let mut found = dedup(found);
-    sort(&mut found);
-    found
+pub struct Scan {
+    pub found: Vec<Found>,
+    pub total_packages: usize,
 }
 
-fn scan_registry(out: &mut Vec<Found>) {
+pub fn scan() -> Scan {
+    let mut found = Vec::new();
+    let mut total = 0;
+    total += scan_registry(&mut found);
+    total += scan_appx(&mut found);
+    let mut found = dedup(found);
+    sort(&mut found);
+    Scan { found, total_packages: total }
+}
+
+pub fn uptime_ms() -> Option<u64> {
+    use windows_sys::Win32::System::SystemInformation::GetTickCount64;
+    Some(unsafe { GetTickCount64() })
+}
+
+pub fn memory() -> Option<(u64, u64)> {
+    use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+    unsafe {
+        let mut m: MEMORYSTATUSEX = std::mem::zeroed();
+        m.dwLength = std::mem::size_of::<MEMORYSTATUSEX>() as u32;
+        if GlobalMemoryStatusEx(&mut m) == 0 {
+            return None;
+        }
+        Some((m.ullTotalPhys - m.ullAvailPhys, m.ullTotalPhys))
+    }
+}
+
+pub fn disk_c() -> Option<(u64, u64)> {
+    use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+    let path: Vec<u16> = "C:\\\0".encode_utf16().collect();
+    let mut free_avail = 0u64;
+    let mut total = 0u64;
+    let mut total_free = 0u64;
+    unsafe {
+        if GetDiskFreeSpaceExW(path.as_ptr(), &mut free_avail, &mut total, &mut total_free) == 0 {
+            return None;
+        }
+    }
+    Some((total - total_free, total))
+}
+
+pub fn autostart_count() -> usize {
+    use winreg::enums::*;
+    use winreg::RegKey;
+    let roots = [
+        (HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"),
+        (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"),
+    ];
+    let mut n = 0;
+    for (hive, path) in roots {
+        if let Ok(k) = RegKey::predef(hive).open_subkey(path) {
+            n += k.enum_values().flatten().count();
+        }
+    }
+    n
+}
+
+fn scan_registry(out: &mut Vec<Found>) -> usize {
     use winreg::enums::*;
     use winreg::RegKey;
 
@@ -59,6 +112,7 @@ fn scan_registry(out: &mut Vec<Found>) {
         (HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
     ];
 
+    let mut total = 0;
     for (hive, path) in roots {
         let base = match RegKey::predef(hive).open_subkey(path) {
             Ok(k) => k,
@@ -73,6 +127,7 @@ fn scan_registry(out: &mut Vec<Found>) {
                 Ok(n) => n,
                 Err(_) => continue,
             };
+            total += 1;
             let entry = match crate::db::match_bloat(&name) {
                 Some(e) => e,
                 None => continue,
@@ -84,9 +139,10 @@ fn scan_registry(out: &mut Vec<Found>) {
             out.push(Found { name, entry, size_bytes });
         }
     }
+    total
 }
 
-fn scan_appx(out: &mut Vec<Found>) {
+fn scan_appx(out: &mut Vec<Found>) -> usize {
     let output = Command::new("powershell.exe")
         .args([
             "-NoProfile",
@@ -98,10 +154,11 @@ fn scan_appx(out: &mut Vec<Found>) {
 
     let output = match output {
         Ok(o) => o,
-        Err(_) => return,
+        Err(_) => return 0,
     };
     let stdout = String::from_utf8_lossy(&output.stdout);
 
+    let mut total = 0;
     for line in stdout.lines() {
         let line = line.trim_end_matches('\r');
         let (name, location) = match line.split_once('|') {
@@ -112,6 +169,7 @@ fn scan_appx(out: &mut Vec<Found>) {
         if name.is_empty() {
             continue;
         }
+        total += 1;
         let entry = match crate::db::match_bloat(name) {
             Some(e) => e,
             None => continue,
@@ -124,6 +182,7 @@ fn scan_appx(out: &mut Vec<Found>) {
         };
         out.push(Found { name: name.to_string(), entry, size_bytes });
     }
+    total
 }
 
 fn dir_size(dir: &std::path::Path, depth: u32) -> Option<u64> {

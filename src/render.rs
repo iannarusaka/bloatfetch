@@ -1,5 +1,5 @@
 use crate::db::Category;
-use crate::detect::Found;
+use crate::detect::{Found, Scan};
 use std::env;
 
 const RESET: &str = "\x1b[0m";
@@ -92,7 +92,10 @@ fn score_and_verdict(found: &[Found]) -> (u32, &'static str, &'static str) {
     (score, verdict, color)
 }
 
-pub fn render(found: &[Found]) {
+pub fn render(scan: &Scan) {
+    let found = &scan.found[..];
+    let total_bytes: u64 = found.iter().filter_map(|f| f.size_bytes).sum();
+
     let art_lines = art();
     let art_width = art_lines.iter().map(|l| visible_width(l)).max().unwrap_or(0);
     let pad = " ".repeat(art_width);
@@ -114,6 +117,49 @@ pub fn render(found: &[Found]) {
         right.push(format!("{} {h}", key("Host")));
     }
 
+    if let Some(ms) = crate::detect::uptime_ms() {
+        let total_min = ms / 60_000;
+        let (d, h, m) = (total_min / 1440, (total_min % 1440) / 60, total_min % 60);
+        let tail = if d >= 7 { " (afraid of updates?)" } else { " (mostly Windows Update)" };
+        right.push(format!("{} {d}d {h}h {m}m{tail}", key("Uptime")));
+    }
+
+    if let Some((used, total)) = crate::detect::memory() {
+        let pct = if total > 0 { used * 100 / total } else { 0 };
+        right.push(format!(
+            "{} {} / {} ({pct}% — vendor services included)",
+            key("Memory"),
+            human_size(used),
+            human_size(total)
+        ));
+    }
+
+    if let Some((used, total)) = crate::detect::disk_c() {
+        let bloat_pct = if total > 0 {
+            total_bytes as f64 / total as f64 * 100.0
+        } else {
+            0.0
+        };
+        right.push(format!(
+            "{} {} / {} used ({:.1}% pure bloat)",
+            key("Disk"),
+            human_size(used),
+            human_size(total),
+            bloat_pct
+        ));
+    }
+
+    if scan.total_packages > 0 {
+        let bloat = found.len();
+        let pct = bloat as f64 / scan.total_packages as f64 * 100.0;
+        right.push(format!(
+            "{} {} installed, {bloat} bloat ({:.1}%)",
+            key("Packages"),
+            scan.total_packages,
+            pct
+        ));
+    }
+
     if found.is_empty() {
         right.push(format!("{DIM}(none found — did you build this PC yourself?){RESET}"));
     } else {
@@ -133,6 +179,22 @@ pub fn render(found: &[Found]) {
             ));
         }
 
+        let autostart = crate::detect::autostart_count();
+        if autostart > 0 {
+            right.push(format!("{} {autostart} programs racing at boot", key("Autostart Junk")));
+        }
+
+        let copilots = found.iter().filter(|f| f.name.to_lowercase().contains("copilot")).count();
+        if copilots > 0 {
+            right.push(format!("{} {copilots} (recommended: 0)", key("Copilots")));
+        }
+
+        let never = 90 + (found.len() % 10);
+        right.push(format!(
+            "{} {never}% of bloat {DIM}(scientific estimate){RESET}",
+            key("Never Opened")
+        ));
+
         let worst = found.iter().max_by_key(|f| f.size_bytes.unwrap_or(0)).unwrap();
         right.push(format!(
             "{} {} ({})",
@@ -144,7 +206,6 @@ pub fn render(found: &[Found]) {
     }
 
     let (score, verdict, score_color) = score_and_verdict(found);
-    let total_bytes: u64 = found.iter().filter_map(|f| f.size_bytes).sum();
 
     if total_bytes > 0 {
         right.push(format!("{} {}", key("Disk wasted"), human_size(total_bytes)));
