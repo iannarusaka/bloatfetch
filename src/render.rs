@@ -223,9 +223,6 @@ pub fn render(scan: &Scan) {
         "{} {score_color}{score}/100  {verdict}{RESET}",
         key("Bloat Score", MAGENTA)
     ));
-    right.push(format!(
-        "{DIM}bloatfetch removes nothing. it just judges you.{RESET}"
-    ));
 
     let total_lines = art_lines.len().max(right.len());
     for i in 0..total_lines {
