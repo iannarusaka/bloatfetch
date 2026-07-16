@@ -113,10 +113,10 @@ pub fn render(scan: &Scan) {
     let key = |label: &str, c: &str| format!("{BOLD}{c}{label}:{RESET}");
 
     if let Some(os) = crate::detect::os_info() {
-        right.push(format!("{} {os}", key("OS", CYAN)));
+        right.push(format!("{} {os}", key("Bloat", CYAN)));
     }
     if let Some(h) = crate::detect::host_info() {
-        right.push(format!("{} {h}", key("Host", CYAN)));
+        right.push(format!("{} {h}", key("Junk Distributor", CYAN)));
     }
 
     if let Some(ms) = crate::detect::uptime_ms() {
