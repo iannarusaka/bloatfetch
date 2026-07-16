@@ -8,37 +8,39 @@ const DIM: &str = "\x1b[2m";
 const RED: &str = "\x1b[31m";
 const BR_RED: &str = "\x1b[91m";
 const YELLOW: &str = "\x1b[33m";
-const BR_YELLOW: &str = "\x1b[93m";
 const GREEN: &str = "\x1b[32m";
-const BR_BLACK: &str = "\x1b[90m";
-const WHITE: &str = "\x1b[37m";
 const CYAN: &str = "\x1b[36m";
 
 fn art() -> Vec<String> {
-    let k = BR_BLACK;
-    let w = WHITE;
-    let y = BR_YELLOW;
-    let r = BR_RED;
-    let y2 = YELLOW;
+    let g = "\x1b[37m";
     let z = RESET;
-    vec![
-        format!("           {r}.{z}           "),
-        format!("          {r}(@){y}.{z}          "),
-        format!("         {y}.:%%:.{z}         "),
-        format!("        {y2}:%%%%%%:{z}        "),
-        format!("       {r}(%{y}%%%%{r}%){z}       "),
-        format!("      {y}':%%%%%%:'{z}      "),
-        format!("        {y2}':%%:'{z}        "),
-        format!("      {k}.-----------.{z}      "),
-        format!("     {k}/{w} BLOATWARE {k}\\{z}     "),
-        format!("    {k}|{w}  X  X  X  {k}|{z}    "),
-        format!("    {k}|{w} X  X  X X {k}|{z}    "),
-        format!("    {k}|{w}  X  X  X  {k}|{z}    "),
-        format!("    {k}|{w} X  X  X X {k}|{z}    "),
-        format!("    {k}|{w}___________{k}|{z}    "),
-        format!("    {k}\\___________/{z}    "),
-        format!("     {k}`-.......-'{z}     "),
+    [
+        "⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣤⣤⣄⣀⠀⠀⠀⠀⠀⠀⠀",
+        "⠀⠀⠀⠀⠀⠀⢠⣶⠟⣉⣤⣢⣄⡪⢝⢦⡀⠀⠀⠀⠀",
+        "⠀⠀⠀⠀⠀⢰⡿⢁⣾⠟⠉⠉⠉⠹⣧⣃⢳⡀⠀⠀⠀",
+        "⠀⠀⠀⢀⣀⣼⡏⣼⠃⠀⠀⠀⠀⠀⢹⣏⣸⡅⠀⠀⠀",
+        "⠀⢀⣴⡿⠿⣿⠃⣿⠀⠀⠀⠀⠀⠀⣸⣷⣿⣶⣄⠀⠀",
+        "⠠⠞⠁⠀⢠⣿⠌⣿⠀⠀⠀⠀⠀⠀⣿⡇⣿⠛⠛⠿⣄",
+        "⠀⠀⢀⣠⠾⠿⠾⣷⡀⠀⠀⠀⡠⢶⠛⠹⠿⢶⣄⠀⠈",
+        "⠀⢠⠋⠀⢀⣁⡀⠘⠙⣦⡀⠘⠈⠀⣠⣤⡀⠀⠻⣦⠀",
+        "⠀⢀⠀⠀⢾⣿⣿⠀⠀⢘⣧⠇⡀⠘⢿⣿⠏⠀⠀⡿⠀",
+        "⠀⠈⢧⡀⠈⣉⡁⠀⣤⡞⠀⠘⢢⣀⡄⠀⢠⣠⠾⠃⠀",
+        "⠀⠀⠀⠉⣷⡖⣶⡛⠉⠀⠀⠀⠀⣿⡏⣿⠋⠁⠀⠀⠀",
+        "⠀⠀⠀⠀⢻⡇⣽⢺⣱⡄⠀⠀⠀⣿⢇⡏⠀⠀⣰⡖⣦",
+        "⠀⠀⠀⠀⣿⡇⣿⢻⠸⡇⠀⠀⠀⣿⢰⡏⢀⣾⢳⡾⠉",
+        "⠀⠀⠀⠀⣿⡄⡿⣿⠘⡁⠀⠀⠐⣿⢸⡇⣾⢇⡿⠀⠀",
+        "⠀⠀⠀⠀⣿⠐⣟⣧⢰⠀⠀⠀⢸⣿⢺⠆⣿⢸⡇⠀⠀",
+        "⠀⠀⠀⠀⣿⠡⣟⣿⢸⡇⠀⠀⢸⣇⢿⠆⣿⢸⡅⠀⠀",
+        "⠀⠀⠀⠀⣿⠡⣏⣿⡸⡅⠀⠀⣼⢏⣼⠆⣿⢸⠃⠀⠀",
+        "⠀⠀⠀⠀⣿⠰⣿⠹⣶⣭⣖⣪⣵⡾⠏⢠⣿⢸⡁⠀⠀",
+        "⠀⠀⠀⠀⣿⢂⡷⠀⠈⠉⠘⠉⠉⠀⠀⠸⣿⢼⡀⠀⠀",
+        "⠀⠀⠀⠀⣿⡍⢿⡀⠀⠀⠀⠀⠀⠀⠀⣸⠇⣼⠀⠀⠀",
+        "⠀⠀⠀⠀⠹⣯⡎⡻⢦⣀⣀⣀⣀⡤⠞⣉⣼⠃⠀⠀⠀",
+        "⠀⠀⠀⠀⠀⠈⠻⢷⣦⣢⣬⣤⣤⣶⠾⠋⠀⠀⠀⠀⠀",
     ]
+    .iter()
+    .map(|l| format!("{g}{l}{z}"))
+    .collect()
 }
 
 /// Width of a string as it would appear on screen, skipping ANSI "ESC[...m" sequences.
