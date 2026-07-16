@@ -86,8 +86,9 @@ fn score_and_verdict(found: &[Found]) -> (u32, &'static str, &'static str) {
         0..=19 => ("suspiciously clean", GREEN),
         20..=39 => ("mild hoarding", YELLOW),
         40..=59 => ("certified OEM victim", YELLOW),
-        60..=79 => ("landfill tier", BR_RED),
-        _ => ("this machine is a Superfund site", RED),
+        60..=74 => ("landfill tier", BR_RED),
+        75..=99 => ("microsoft data supplier", RED),
+        _ => ("Bill Gates", RED),
     };
     (score, verdict, color)
 }
