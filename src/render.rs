@@ -202,7 +202,7 @@ pub fn render(scan: &Scan) {
             worst.name,
             human_size(worst.size_bytes.unwrap_or(0))
         ));
-        right.push(format!("{} {DIM}{}{RESET}", key("Roast"), worst.entry.snark));
+        right.push(format!("{} {DIM}{}{RESET}", key("Diagnosis"), worst.entry.snark));
     }
 
     let (score, verdict, score_color) = score_and_verdict(found);
