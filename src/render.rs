@@ -162,6 +162,8 @@ pub fn render(scan: &Scan) {
         ));
     }
 
+    right.push(String::new());
+
     if found.is_empty() {
         right.push(format!("{DIM}(none found — did you build this PC yourself?){RESET}"));
     } else {
@@ -181,6 +183,8 @@ pub fn render(scan: &Scan) {
             ));
         }
 
+        right.push(String::new());
+
         let autostart = crate::detect::autostart_count();
         if autostart > 0 {
             right.push(format!("{} {autostart} programs racing at boot", key("Autostart Junk", GREEN)));
@@ -197,6 +201,8 @@ pub fn render(scan: &Scan) {
             key("Never Opened", GREEN)
         ));
 
+        right.push(String::new());
+
         let worst = found.iter().max_by_key(|f| f.size_bytes.unwrap_or(0)).unwrap();
         right.push(format!(
             "{} {} ({})",
@@ -208,6 +214,8 @@ pub fn render(scan: &Scan) {
     }
 
     let (score, verdict, score_color) = score_and_verdict(found);
+
+    right.push(String::new());
 
     if total_bytes > 0 {
         right.push(format!("{} {}", key("Disk wasted", MAGENTA), human_size(total_bytes)));
